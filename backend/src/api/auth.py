@@ -14,6 +14,7 @@ from typing import Any, Dict, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from ..core.exceptions import (
+    AuthConfigurationError,
     ChallengeGenerationError,
     ChallengeVerificationError,
 )

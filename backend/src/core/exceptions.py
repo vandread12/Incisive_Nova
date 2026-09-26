@@ -11,6 +11,14 @@ class AuthError(Exception):
     """Excepción base para errores de autenticación."""
 
 
+class AuthConfigurationError(AuthError):
+    """La configuración de autenticación del servidor es inválida.
+
+    P. ej. SERVER_SIGNING_KEY ausente o con formato incorrecto. Indica un
+    problema de despliegue (secretos), no un error del cliente.
+    """
+
+
 class ChallengeGenerationError(AuthError):
     """Error al generar la transacción de desafío SEP-10."""
 

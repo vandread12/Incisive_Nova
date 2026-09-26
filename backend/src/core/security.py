@@ -28,6 +28,7 @@ from stellar_sdk.sep.exceptions import InvalidSep10ChallengeError
 
 from ..schemas.auth_schemas import AuthConfig, UserRoleEnum
 from .exceptions import (
+    AuthConfigurationError,
     ChallengeGenerationError,
     ChallengeVerificationError,
     InvalidAuthorizationSchemeError,
@@ -48,7 +49,15 @@ class AuthService:
     def __init__(self, config: AuthConfig):
         self.config = config
         # Valida que la semilla del servidor sea un secret Stellar válido.
-        self.server_keypair = Keypair.from_secret(config.server_signing_key)
+        # Si SERVER_SIGNING_KEY no está configurada correctamente, se lanza un
+        # AuthConfigurationError con un mensaje claro (evita un 500 opaco).
+        try:
+            self.server_keypair = Keypair.from_secret(config.server_signing_key)
+        except Exception as exc:  # Ed25519SecretSeedInvalidError, etc.
+            raise AuthConfigurationError(
+                "SERVER_SIGNING_KEY no es una semilla Stellar válida (formato S...). "
+                "Verifica el secreto server_signing_key en el gestor de secretos."
+            ) from exc
 
     @property
     def _issuer(self) -> str:

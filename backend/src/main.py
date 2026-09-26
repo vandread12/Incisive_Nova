@@ -6,13 +6,18 @@ SEP-10 / JWT (SPEC-07); los routers de negocio, transacciones, auditoría y
 MCP se añadirán en tareas posteriores.
 """
 
+import logging
 import os
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from .api.auth import router as auth_router
 from .api.settlement import router as settlement_router
+from .core.exceptions import AuthConfigurationError
+
+logger = logging.getLogger(__name__)
 
 
 def _cors_origins() -> list[str]:
@@ -46,6 +51,22 @@ def create_app() -> FastAPI:
     )
     app.include_router(auth_router)
     app.include_router(settlement_router)
+
+    @app.exception_handler(AuthConfigurationError)
+    async def _auth_config_error_handler(
+        request: Request, exc: AuthConfigurationError
+    ) -> JSONResponse:
+        """Traduce errores de configuración de auth a 503 (no un 500 opaco)."""
+        logger.error("Error de configuración de autenticación: %s", exc)
+        return JSONResponse(
+            status_code=503,
+            content={
+                "detail": (
+                    "El servicio de autenticación no está configurado "
+                    "correctamente. Contacta al administrador."
+                )
+            },
+        )
 
     @app.get("/health", tags=["health"])
     async def health() -> dict:
