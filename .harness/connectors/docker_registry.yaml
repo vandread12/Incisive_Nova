@@ -1,0 +1,16 @@
+connector:
+  name: Incisive Nova Docker Registry
+  identifier: docker_registry
+  projectIdentifier: incisive_nova
+  orgIdentifier: default
+  type: DockerRegistry
+  spec:
+    dockerRegistryUrl: https://index.docker.io/v1/
+    providerType: DockerHub
+    auth:
+      type: UsernamePassword
+      spec:
+        username: <+input>
+        # Credencial gestionada por el Harness Secret Manager.
+        passwordRef: docker_registry_token
+    executeOnDelegate: false

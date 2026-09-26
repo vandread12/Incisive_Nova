@@ -1,0 +1,22 @@
+infrastructureDefinition:
+  name: Docker Agentic Platform
+  identifier: docker_agentic_platform
+  orgIdentifier: default
+  projectIdentifier: incisive_nova
+  # Se referencia desde ambos entornos (staging/production); el environmentRef
+  # efectivo lo fija cada stage del pipeline de CD.
+  environmentRef: staging
+  deploymentType: CustomDeployment
+  type: CustomDeployment
+  spec:
+    customDeploymentRef:
+      templateRef: docker_agentic_platform_template
+      versionLabel: v1
+    variables:
+      - name: compose_file
+        type: String
+        value: docker-compose.yml
+      - name: platform_config
+        type: String
+        value: agent-platform.yaml
+  allowSimultaneousDeployments: false

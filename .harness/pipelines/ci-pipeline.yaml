@@ -1,0 +1,187 @@
+pipeline:
+  name: Incisive Nova - CI
+  identifier: incisive_nova_ci
+  projectIdentifier: incisive_nova
+  orgIdentifier: default
+  tags:
+    project: incisive-nova
+    type: ci
+  properties:
+    ci:
+      codebase:
+        connectorRef: github_repo
+        repoName: incisive-nova
+        build: <+input>
+  stages:
+    # ------------------------------------------------------------------
+    # 1. Escaneo de seguridad estático (SAST + secret scanning)
+    #    Se ejecuta primero (fail-fast) para evitar fugas de credenciales
+    #    Stellar antes de gastar recursos en tests/builds.
+    # ------------------------------------------------------------------
+    - stage:
+        name: Security Scan (SAST)
+        identifier: security_scan
+        type: SecurityTests
+        spec:
+          cloneCodebase: true
+          platform:
+            os: Linux
+            arch: Amd64
+          runtime:
+            type: Cloud
+            spec: {}
+          execution:
+            steps:
+              - step:
+                  type: Semgrep
+                  name: SAST Scan
+                  identifier: sast_scan
+                  spec:
+                    mode: orchestration
+                    config: default
+                    target:
+                      type: repository
+                      name: incisive-nova
+                      variant: <+codebase.branch>
+                    advanced:
+                      log:
+                        level: info
+                      fail_on_severity: critical
+              - step:
+                  type: Run
+                  name: Gitleaks Secret Scan
+                  identifier: gitleaks_secret_scan
+                  spec:
+                    connectorRef: docker_registry
+                    image: zricethezav/gitleaks:latest
+                    shell: Sh
+                    # Detecta semillas Stellar (S...), claves privadas ed25519 y
+                    # credenciales expuestas. Falla el pipeline (exit 1) ante
+                    # cualquier hallazgo, protegiendo STELLAR_SECRET_SEED.
+                    command: |
+                      gitleaks detect \
+                        --source . \
+                        --no-git \
+                        --redact \
+                        --verbose \
+                        --exit-code 1 \
+                        --config .harness/gitleaks-stellar.toml
+    # ------------------------------------------------------------------
+    # 2. Tests del backend (pytest) y validación de tipos del frontend
+    #    Corren en paralelo para reducir el tiempo total del PR.
+    # ------------------------------------------------------------------
+    - parallel:
+        - stage:
+            name: Test Backend
+            identifier: test_backend
+            type: CI
+            spec:
+              cloneCodebase: true
+              platform:
+                os: Linux
+                arch: Amd64
+              runtime:
+                type: Cloud
+                spec: {}
+              execution:
+                steps:
+                  - step:
+                      type: Run
+                      name: Pytest FastAPI
+                      identifier: pytest_fastapi
+                      spec:
+                        connectorRef: docker_registry
+                        image: python:3.11-slim
+                        shell: Sh
+                        command: |
+                          cd backend
+                          pip install --no-cache-dir -r requirements.txt
+                          python -m pytest tests/ -v \
+                            --junitxml=report.xml \
+                            -W ignore::DeprecationWarning
+                        reports:
+                          type: JUnit
+                          spec:
+                            paths:
+                              - backend/report.xml
+        - stage:
+            name: Test Frontend
+            identifier: test_frontend
+            type: CI
+            spec:
+              cloneCodebase: true
+              platform:
+                os: Linux
+                arch: Amd64
+              runtime:
+                type: Cloud
+                spec: {}
+              execution:
+                steps:
+                  - step:
+                      type: Run
+                      name: Next.js Type Check & Lint
+                      identifier: nextjs_type_check
+                      spec:
+                        connectorRef: docker_registry
+                        image: node:20-alpine
+                        shell: Sh
+                        command: |
+                          cd frontend
+                          npm ci --ignore-scripts
+                          npm run type-check
+                          npm run lint
+    # ------------------------------------------------------------------
+    # 3. Build & push de imágenes Docker multi-stage
+    #    (backend orquestador, mcp-signer y frontend)
+    # ------------------------------------------------------------------
+    - stage:
+        name: Build & Push Images
+        identifier: build_push
+        type: CI
+        spec:
+          cloneCodebase: true
+          platform:
+            os: Linux
+            arch: Amd64
+          runtime:
+            type: Cloud
+            spec: {}
+          execution:
+            steps:
+              - step:
+                  type: BuildAndPushDockerRegistry
+                  name: Build Backend API
+                  identifier: build_backend
+                  spec:
+                    connectorRef: docker_registry
+                    repo: incisive-nova-api
+                    tags:
+                      - <+codebase.commitSha>
+                      - latest
+                    dockerfile: backend/Dockerfile
+                    context: backend
+              - step:
+                  type: BuildAndPushDockerRegistry
+                  name: Build MCP Signer
+                  identifier: build_mcp_signer
+                  spec:
+                    connectorRef: docker_registry
+                    repo: incisive-nova-mcp-signer
+                    tags:
+                      - <+codebase.commitSha>
+                      - latest
+                    dockerfile: backend/Dockerfile.mcp
+                    context: backend
+              - step:
+                  type: BuildAndPushDockerRegistry
+                  name: Build Frontend
+                  identifier: build_frontend
+                  spec:
+                    connectorRef: docker_registry
+                    repo: incisive-nova-frontend
+                    tags:
+                      - <+codebase.commitSha>
+                      - latest
+                    dockerfile: frontend/Dockerfile
+                    context: frontend

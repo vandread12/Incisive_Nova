@@ -1,0 +1,40 @@
+service:
+  name: Incisive Nova Platform
+  identifier: incisive_nova_platform
+  projectIdentifier: incisive_nova
+  orgIdentifier: default
+  tags:
+    project: incisive-nova
+  serviceDefinition:
+    type: CustomDeployment
+    spec:
+      customDeploymentRef:
+        templateRef: docker_agentic_platform_template
+        versionLabel: v1
+      # Artefactos: las tres imágenes construidas en el pipeline de CI.
+      artifacts:
+        primary:
+          primaryArtifactRef: <+input>
+          sources:
+            - identifier: api_image
+              type: DockerRegistry
+              spec:
+                connectorRef: docker_registry
+                imagePath: incisive-nova-api
+                tag: <+input>
+            - identifier: mcp_signer_image
+              type: DockerRegistry
+              spec:
+                connectorRef: docker_registry
+                imagePath: incisive-nova-mcp-signer
+                tag: <+input>
+            - identifier: frontend_image
+              type: DockerRegistry
+              spec:
+                connectorRef: docker_registry
+                imagePath: incisive-nova-frontend
+                tag: <+input>
+      variables:
+        - name: MCP_SERVER_URL
+          type: String
+          value: https://incisive-nova-mcp-signer:9090

@@ -1,0 +1,137 @@
+pipeline:
+  name: Incisive Nova - CD
+  identifier: incisive_nova_cd
+  projectIdentifier: incisive_nova
+  orgIdentifier: default
+  tags:
+    project: incisive-nova
+    type: cd
+  stages:
+    # ------------------------------------------------------------------
+    # 1. Despliegue a Staging (Docker Agentic Platform)
+    #    Basado en agent-platform.yaml. Los secretos se inyectan en runtime
+    #    desde el Harness Secret Manager; nunca aparecen en el YAML ni en logs.
+    # ------------------------------------------------------------------
+    - stage:
+        name: Deploy Staging
+        identifier: deploy_staging
+        type: Deployment
+        spec:
+          deploymentType: CustomDeployment
+          service:
+            serviceRef: incisive_nova_platform
+          environment:
+            environmentRef: staging
+            deployToAll: false
+            infrastructureDefinitions:
+              - identifier: docker_agentic_platform
+          execution:
+            steps:
+              - step:
+                  type: Run
+                  name: Deploy Stack to Docker Agentic Platform
+                  identifier: deploy_stack_staging
+                  spec:
+                    shell: Sh
+                    # Secretos inyectados desde el Harness Secret Manager.
+                    envVariables:
+                      STELLAR_SECRET_SEED: <+secrets.getValue("stellar_secret_seed")>
+                      SERVER_SIGNING_KEY: <+secrets.getValue("server_signing_key")>
+                      SERVER_PUBLIC_KEY: <+secrets.getValue("server_public_key")>
+                      JWT_SECRET_KEY: <+secrets.getValue("jwt_secret_key")>
+                      JEV_API_KEY: <+secrets.getValue("jev_api_key")>
+                      ABROAD_API_KEY: <+secrets.getValue("abroad_api_key")>
+                      POSTGRES_PASSWORD: <+secrets.getValue("postgres_password")>
+                      IMAGE_TAG: <+pipeline.sequenceId>
+                    command: |
+                      echo "Desplegando Incisive Nova en Docker Agentic Platform (staging)..."
+                      # Orquesta el stack definido en agent-platform.yaml.
+                      docker compose -f docker-compose.yml pull
+                      docker compose -f docker-compose.yml up -d --remove-orphans
+                      docker compose -f docker-compose.yml ps
+              - step:
+                  type: Run
+                  name: Health Check
+                  identifier: health_check_staging
+                  spec:
+                    shell: Sh
+                    command: |
+                      echo "Verificando salud del api-service..."
+                      for i in $(seq 1 10); do
+                        if curl -fsS http://api-service:8000/health; then
+                          echo "api-service saludable"
+                          exit 0
+                        fi
+                        sleep 6
+                      done
+                      echo "api-service no respondió a tiempo"
+                      exit 1
+    # ------------------------------------------------------------------
+    # 2. Puerta de aprobación manual antes de producción
+    # ------------------------------------------------------------------
+    - stage:
+        name: Approve Production
+        identifier: approve_production
+        type: Approval
+        spec:
+          execution:
+            steps:
+              - step:
+                  type: HarnessApproval
+                  name: Manual Approval
+                  identifier: manual_approval
+                  timeout: 1d
+                  spec:
+                    approvalMessage: |
+                      Aprobar el despliegue de Incisive Nova a Producción.
+                      Verifica que staging esté saludable y los tests en verde.
+                    includePipelineExecutionHistory: true
+                    isAutoRejectEnabled: false
+                    approvers:
+                      userGroups:
+                        - _project_all_users
+                      minimumCount: 1
+                      disallowPipelineExecutor: false
+    # ------------------------------------------------------------------
+    # 3. Despliegue a Producción (Docker Agentic Platform)
+    # ------------------------------------------------------------------
+    - stage:
+        name: Deploy Production
+        identifier: deploy_production
+        type: Deployment
+        spec:
+          deploymentType: CustomDeployment
+          service:
+            serviceRef: incisive_nova_platform
+          environment:
+            environmentRef: production
+            deployToAll: false
+            infrastructureDefinitions:
+              - identifier: docker_agentic_platform
+          execution:
+            steps:
+              - step:
+                  type: Run
+                  name: Deploy Stack to Production
+                  identifier: deploy_stack_production
+                  spec:
+                    shell: Sh
+                    envVariables:
+                      STELLAR_SECRET_SEED: <+secrets.getValue("stellar_secret_seed")>
+                      SERVER_SIGNING_KEY: <+secrets.getValue("server_signing_key")>
+                      SERVER_PUBLIC_KEY: <+secrets.getValue("server_public_key")>
+                      JWT_SECRET_KEY: <+secrets.getValue("jwt_secret_key")>
+                      JEV_API_KEY: <+secrets.getValue("jev_api_key")>
+                      ABROAD_API_KEY: <+secrets.getValue("abroad_api_key")>
+                      POSTGRES_PASSWORD: <+secrets.getValue("postgres_password")>
+                      IMAGE_TAG: <+pipeline.sequenceId>
+                    command: |
+                      echo "Desplegando Incisive Nova en Docker Agentic Platform (producción)..."
+                      docker compose -f docker-compose.yml pull
+                      docker compose -f docker-compose.yml up -d --remove-orphans
+          failureStrategies:
+            - onFailure:
+                errors:
+                  - AllErrors
+                action:
+                  type: StageRollback

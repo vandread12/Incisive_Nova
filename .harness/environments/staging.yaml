@@ -1,0 +1,15 @@
+environment:
+  name: Staging
+  identifier: staging
+  projectIdentifier: incisive_nova
+  orgIdentifier: default
+  type: PreProduction
+  tags:
+    project: incisive-nova
+  variables:
+    - name: STELLAR_NETWORK
+      type: String
+      value: testnet
+    - name: HOME_DOMAIN
+      type: String
+      value: api.incisivenova.internal

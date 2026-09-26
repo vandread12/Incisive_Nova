@@ -1,0 +1,36 @@
+# === Incisive Nova - raíz ===
+
+# Secretos y entornos (NUNCA subir)
+.env
+.env.*
+!.env.example
+keys/
+*.pem
+*.key
+
+# Python (backend)
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.venv/
+venv/
+*.egg
+
+# Node / Next.js (frontend)
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+
+# Docker
+*.log
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+*.swp

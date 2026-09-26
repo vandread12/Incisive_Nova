@@ -1,0 +1,20 @@
+# Incisive Nova - Backend dependencies (SPEC-07 / SPEC-01)
+# Versiones verificadas con la suite de tests (70/70 en verde).
+
+# Framework web
+fastapi>=0.110,<1.0
+# starlette pineado: la 1.7.0 introduce un routing incompatible con FastAPI 0.141.
+starlette>=0.40,<0.50
+
+# Validación de datos
+pydantic>=2.5,<3.0
+
+# Autenticación SEP-10 / Stellar
+stellar-sdk>=12,<13
+pyjwt>=2.8,<3.0
+
+# Cliente HTTP (integraciones Abroad / MCP)
+httpx>=0.25,<1.0
+
+# Testing
+pytest>=7.4

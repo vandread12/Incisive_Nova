@@ -1,0 +1,47 @@
+# Incisive Nova - MCP Signer (proceso de firma aislado)
+#
+# Imagen multi-stage para el servidor MCP que aísla la firma criptográfica.
+# La semilla se inyecta en runtime vía STELLAR_SECRET_SEED (Harness Secret
+# Manager); nunca se hornea en la imagen.
+#
+# NOTA: el punto de entrada del servidor MCP aislado (mcp_server) se implementa
+# en el Módulo 3. Este Dockerfile deja la imagen lista con el firmante ya
+# disponible (src/security/signer.py).
+
+# ---- Stage 1: builder ----
+FROM python:3.11-slim AS builder
+
+WORKDIR /app
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1
+
+COPY requirements.txt .
+RUN python -m venv /opt/venv && \
+    /opt/venv/bin/pip install --upgrade pip && \
+    /opt/venv/bin/pip install -r requirements.txt
+
+# ---- Stage 2: runtime (aislado) ----
+FROM python:3.11-slim AS runtime
+
+WORKDIR /app
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PATH="/opt/venv/bin:$PATH" \
+    KEY_STORAGE_TYPE=hsm \
+    SIGNATURE_ALGO=ed25519
+
+# Usuario no-root: el firmante corre con privilegios mínimos.
+RUN groupadd --system signer && useradd --system --gid signer --create-home signeruser
+
+COPY --from=builder /opt/venv /opt/venv
+COPY src ./src
+
+USER signeruser
+
+EXPOSE 9090
+
+# Placeholder del entrypoint del servidor MCP (se define en el Módulo 3).
+CMD ["python", "-m", "src.mcp_server"]

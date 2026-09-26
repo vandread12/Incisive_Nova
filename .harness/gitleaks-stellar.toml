@@ -1,0 +1,43 @@
+# Configuración de Gitleaks para Incisive Nova (SPEC-01 / SPEC-07)
+#
+# Extiende las reglas por defecto de gitleaks y añade detección específica de
+# credenciales Stellar. El objetivo es evitar fugas de STELLAR_SECRET_SEED y
+# claves privadas ed25519 en el código fuente (defensa en profundidad, además
+# del consumo exclusivo vía os.getenv en el backend).
+
+title = "Incisive Nova Gitleaks Config"
+
+[extend]
+# Hereda el conjunto de reglas base de gitleaks.
+useDefault = true
+
+[[rules]]
+id = "stellar-secret-seed"
+description = "Stellar secret seed (S... 56 chars)"
+# Las semillas secretas Stellar empiezan por 'S' y tienen 56 caracteres base32.
+regex = '''\bS[A-Z2-7]{55}\b'''
+tags = ["stellar", "secret", "private-key"]
+
+[[rules]]
+id = "stellar-secret-seed-assignment"
+description = "Assignment of a Stellar secret seed to an env/variable"
+regex = '''(?i)(stellar_secret_seed|server_signing_key)\s*[:=]\s*['"]?S[A-Z2-7]{55}'''
+tags = ["stellar", "secret"]
+
+[[rules]]
+id = "jwt-secret-hardcoded"
+description = "Hardcoded JWT secret key"
+regex = '''(?i)jwt_secret_key\s*[:=]\s*['"][^'"$][^'"]{16,}['"]'''
+tags = ["jwt", "secret"]
+
+[allowlist]
+description = "Rutas y patrones permitidos (falsos positivos conocidos)"
+paths = [
+  '''\.harness/gitleaks-stellar\.toml''',
+  '''.*\.md$''',
+  '''.*/tests?/.*''',
+]
+# Las direcciones PÚBLICAS Stellar (G...) no son secretas; se permiten.
+regexes = [
+  '''\bG[A-Z2-7]{55}\b''',
+]

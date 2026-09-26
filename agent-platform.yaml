@@ -1,0 +1,189 @@
+# Orchestration Platform Configuration: Incisive Nova
+# Agentic B2B Settlement Platform with MCP Isolation
+
+project: incisive-nova
+version: 1.0.0
+environment: development
+
+# Platform Components
+components:
+  # Backend Services
+  api-service:
+    type: fastapi
+    image: incisive-nova-api:latest
+    port: 8000
+    env:
+      - STELLAR_NETWORK=testnet
+      - DATABASE_URL=postgresql://incisive_nova:password@postgres:5432/incisive_nova
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      - SERVER_SIGNING_KEY=${SERVER_SIGNING_KEY}
+      - SERVER_PUBLIC_KEY=${SERVER_PUBLIC_KEY}
+      - MCP_SERVER_URL=https://incisive-nova-mcp-signer:9090
+    health_check: /health
+    dependencies:
+      - postgres
+      - redis
+      - mcp-signer
+
+  # Model Context Protocol Server
+  mcp-signer:
+    type: isolated-mcp
+    image: incisive-nova-mcp-signer:latest
+    port: 9090
+    env:
+      - KEY_STORAGE_TYPE=hsm
+      - SIGNATURE_ALGO=ed25519
+      - JWT_VALIDATION_ENABLED=true
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+    volumes:
+      - ./keys:/secure/keys
+    security:
+      isolation: container
+      network: private
+
+  # Database
+  postgres:
+    type: postgres
+    image: postgres:15-alpine
+    port: 5432
+    env:
+      - POSTGRES_DB=incisive_nova
+      - POSTGRES_USER=incisive_nova
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    persistence: true
+
+  # Cache
+  redis:
+    type: redis
+    image: redis:7-alpine
+    port: 6379
+    persistence: false
+
+  # Frontend (Next.js)
+  frontend:
+    type: nextjs
+    image: incisive-nova-frontend:latest
+    port: 3000
+    env:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+      - NEXT_PUBLIC_APP_NAME="Incisive Nova"
+      - NEXT_PUBLIC_STELLAR_NETWORK=testnet
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.frontend
+
+# Network Configuration
+network:
+  name: incisive-nova-network
+  driver: bridge
+  subnet: 172.20.0.0/16
+
+# Service Discovery
+service_discovery:
+  api-service: http://api-service:8000
+  mcp-signer: https://mcp-signer:9090
+  frontend: http://frontend:3000
+
+# Security Configuration
+security:
+  jwt:
+    algorithm: HS256
+    expiration: 86400  # 24 hours
+    issuer: https://api.incisivenova.internal
+    audience: incisive-nova-platform
+  
+  stellar_auth:
+    sep10_enabled: true
+    home_domain: api.incisivenova.internal
+    challenge_timeout: 300  # 5 minutes
+    supported_wallets:
+      - freighter
+      - albedo
+      - xbull
+  
+  network_policy:
+    internal_only:
+      - mcp-signer:9090
+    public:
+      - api-service:8000
+      - frontend:3000
+
+# Monitoring & Observability
+monitoring:
+  logs:
+    driver: json-file
+    retention: 7d
+  
+  metrics:
+    enabled: true
+    endpoint: /metrics
+    port: 9091
+  
+  tracing:
+    enabled: true
+    jaeger_endpoint: jaeger:6831
+
+# Deployment Configuration
+deployment:
+  strategy: rolling
+  replicas:
+    api-service: 3
+    frontend: 2
+    mcp-signer: 1  # Stateless, but isolated
+  
+  resources:
+    api-service:
+      cpu: "1"
+      memory: "1Gi"
+    mcp-signer:
+      cpu: "0.5"
+      memory: "512Mi"
+    frontend:
+      cpu: "0.5"
+      memory: "512Mi"
+  
+  health_checks:
+    initial_delay: 30
+    period: 10
+    timeout: 5
+    success_threshold: 1
+    failure_threshold: 3
+
+# Environment Variables (Secrets)
+secrets:
+  required:
+    - JWT_SECRET_KEY
+    - SERVER_SIGNING_KEY
+    - SERVER_PUBLIC_KEY
+    - POSTGRES_PASSWORD
+  
+  optional:
+    - ABROAD_API_KEY
+    - STELLAR_HORIZON_URL
+    - SENTRY_DSN
+
+# Volume Configuration
+volumes:
+  pgdata:
+    driver: local
+    size: 10Gi
+  
+  keys:
+    driver: local
+    size: 1Gi
+  
+  logs:
+    driver: local
+    size: 5Gi
+
+# Backup Configuration
+backup:
+  enabled: true
+  schedule: "0 2 * * *"  # Daily at 2 AM
+  retention: 30d
+  target:
+    database: true
+    keys: true
+    logs: false

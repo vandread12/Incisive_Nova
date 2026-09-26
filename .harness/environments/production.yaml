@@ -1,0 +1,15 @@
+environment:
+  name: Production
+  identifier: production
+  projectIdentifier: incisive_nova
+  orgIdentifier: default
+  type: Production
+  tags:
+    project: incisive-nova
+  variables:
+    - name: STELLAR_NETWORK
+      type: String
+      value: public
+    - name: HOME_DOMAIN
+      type: String
+      value: api.incisivenova.internal
