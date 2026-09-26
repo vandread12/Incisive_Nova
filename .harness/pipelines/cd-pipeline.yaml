@@ -23,22 +23,16 @@ pipeline:
   stages:
     # ------------------------------------------------------------------
     # 1. Despliegue a Staging (Docker Agentic Platform)
-    #    Basado en agent-platform.yaml. Los secretos se inyectan en runtime
-    #    desde el Harness Secret Manager; nunca aparecen en el YAML ni en logs.
+    #    Custom Stage con pasos Run (CLI). No requiere Deployment Template ni
+    #    "Fetch Instances": es un despliegue basado en scripts sobre Cloud
+    #    Sandboxes. Los secretos se inyectan en runtime desde el Secret Manager;
+    #    nunca aparecen en el YAML ni en logs.
     # ------------------------------------------------------------------
     - stage:
         name: Deploy Staging
         identifier: deploy_staging
-        type: Deployment
+        type: Custom
         spec:
-          deploymentType: CustomDeployment
-          service:
-            serviceRef: incisive_nova_platform
-          environment:
-            environmentRef: staging
-            deployToAll: false
-            infrastructureDefinitions:
-              - identifier: docker_agentic_platform
           execution:
             steps:
               - step:
@@ -47,7 +41,6 @@ pipeline:
                   identifier: deploy_stack_staging
                   spec:
                     shell: Sh
-                    # Secretos inyectados desde el Harness Secret Manager.
                     envVariables:
                       DOCKER_AGENTIC_TOKEN: <+pipeline.variables.DOCKER_AGENTIC_TOKEN>
                       STELLAR_SECRET_SEED: <+secrets.getValue("stellar_secret_seed")>
@@ -65,6 +58,7 @@ pipeline:
                       docker compose -f docker-compose.yml pull
                       docker compose -f docker-compose.yml up -d --remove-orphans
                       docker compose -f docker-compose.yml ps
+                  timeout: 15m
               - step:
                   type: Run
                   name: Health Check
@@ -82,12 +76,13 @@ pipeline:
                       done
                       echo "api-service no respondió a tiempo"
                       exit 1
+                  timeout: 5m
         failureStrategies:
           - onFailure:
               errors:
                 - AllErrors
               action:
-                type: StageRollback
+                type: MarkAsFailure
     # ------------------------------------------------------------------
     # 2. Puerta de aprobación manual antes de producción
     # ------------------------------------------------------------------
@@ -122,20 +117,13 @@ pipeline:
                 type: MarkAsFailure
     # ------------------------------------------------------------------
     # 3. Despliegue a Producción (Docker Agentic Platform)
+    #    Custom Stage con pasos Run (CLI), igual que staging.
     # ------------------------------------------------------------------
     - stage:
         name: Deploy Production
         identifier: deploy_production
-        type: Deployment
+        type: Custom
         spec:
-          deploymentType: CustomDeployment
-          service:
-            serviceRef: incisive_nova_platform
-          environment:
-            environmentRef: production
-            deployToAll: false
-            infrastructureDefinitions:
-              - identifier: docker_agentic_platform
           execution:
             steps:
               - step:
@@ -159,9 +147,10 @@ pipeline:
                       # Autenticación con la plataforma vía DOCKER_AGENTIC_TOKEN.
                       docker compose -f docker-compose.yml pull
                       docker compose -f docker-compose.yml up -d --remove-orphans
+                  timeout: 15m
         failureStrategies:
           - onFailure:
               errors:
                 - AllErrors
               action:
-                type: StageRollback
+                type: MarkAsFailure
