@@ -1,7 +1,7 @@
 environment:
   name: Staging
   identifier: staging
-  projectIdentifier: incisive_nova
+  projectIdentifier: incisivenova
   orgIdentifier: default
   type: PreProduction
   tags:

@@ -3,7 +3,7 @@ trigger:
   identifier: ci_on_pull_request
   enabled: true
   orgIdentifier: default
-  projectIdentifier: incisive_nova
+  projectIdentifier: incisivenova
   pipelineIdentifier: incisive_nova_ci
   description: >-
     Dispara el pipeline de Integración Continua ante cualquier Pull Request
@@ -18,7 +18,7 @@ trigger:
       spec:
         type: PullRequest
         spec:
-          connectorRef: github_repo
+          connectorRef: incisive_nova
           autoAbortPreviousExecutions: true
           payloadConditions:
             - key: targetBranch

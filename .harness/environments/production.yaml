@@ -1,7 +1,7 @@
 environment:
   name: Production
   identifier: production
-  projectIdentifier: incisive_nova
+  projectIdentifier: incisivenova
   orgIdentifier: default
   type: Production
   tags:

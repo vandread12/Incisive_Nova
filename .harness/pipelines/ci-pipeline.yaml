@@ -1,7 +1,7 @@
 pipeline:
   name: Incisive Nova - CI
   identifier: incisive_nova_ci
-  projectIdentifier: incisive_nova
+  projectIdentifier: incisivenova
   orgIdentifier: default
   tags:
     project: incisive-nova
@@ -9,8 +9,8 @@ pipeline:
   properties:
     ci:
       codebase:
-        connectorRef: github_repo
-        repoName: incisive-nova
+        connectorRef: incisive_nova
+        repoName: Incisive_Nova
         build: <+input>
   stages:
     # ------------------------------------------------------------------

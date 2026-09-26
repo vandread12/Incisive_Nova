@@ -255,7 +255,11 @@ Infraestructura como código (pipeline-as-code) para CI/CD con Harness, más el 
 - [x] `.gitignore` de raíz + verificación de ausencia de semillas/`.env` con secretos
 - [x] Backend 114/114 en verde y frontend `build` OK tras los cambios
 
-> Acciones pendientes en la cuenta de Harness (no automatizables desde el repo): crear el proyecto `incisive_nova`, generar el PAT, registrar los valores reales de los secretos y configurar los triggers push/PR.
+> Alineado con el conector real de Harness (conectado por el usuario):
+>  - `projectIdentifier: incisivenova` (sin guion bajo), `orgIdentifier: default`, `accountIdentifier: AR51kkJYQVynhdI8uMFtDA`
+>  - Conector GitHub: identifier `incisive_nova`, `tokenRef: incisive` (`.harness/connectors/incisive_nova.yaml`)
+>  - Todos los pipelines/triggers/servicios/entornos referencian `connectorRef: incisive_nova`
+> Acciones pendientes en la cuenta de Harness: registrar los valores reales de los secretos (`stellar_secret_seed`, `jev_api_key`, `abroad_api_key`, `docker_agentic_token`, etc.) y crear los pipelines/triggers desde estos YAML.
 
 ## Tareas de Implementación por Módulo
 

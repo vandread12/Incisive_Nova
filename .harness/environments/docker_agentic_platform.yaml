@@ -2,7 +2,7 @@ infrastructureDefinition:
   name: Docker Agentic Platform
   identifier: docker_agentic_platform
   orgIdentifier: default
-  projectIdentifier: incisive_nova
+  projectIdentifier: incisivenova
   # Se referencia desde ambos entornos (staging/production); el environmentRef
   # efectivo lo fija cada stage del pipeline de CD.
   environmentRef: staging

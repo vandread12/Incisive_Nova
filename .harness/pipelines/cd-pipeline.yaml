@@ -1,7 +1,7 @@
 pipeline:
   name: Incisive Nova - CD
   identifier: incisive_nova_cd
-  projectIdentifier: incisive_nova
+  projectIdentifier: incisivenova
   orgIdentifier: default
   tags:
     project: incisive-nova

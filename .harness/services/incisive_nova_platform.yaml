@@ -1,7 +1,7 @@
 service:
   name: Incisive Nova Platform
   identifier: incisive_nova_platform
-  projectIdentifier: incisive_nova
+  projectIdentifier: incisivenova
   orgIdentifier: default
   tags:
     project: incisive-nova

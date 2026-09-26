@@ -3,7 +3,7 @@ trigger:
   identifier: cd_on_push_main
   enabled: true
   orgIdentifier: default
-  projectIdentifier: incisive_nova
+  projectIdentifier: incisivenova
   pipelineIdentifier: incisive_nova_cd
   description: >-
     Dispara el pipeline de Despliegue Continuo ante cualquier push o merge
@@ -20,7 +20,7 @@ trigger:
       spec:
         type: Push
         spec:
-          connectorRef: github_repo
+          connectorRef: incisive_nova
           autoAbortPreviousExecutions: false
           payloadConditions:
             - key: targetBranch

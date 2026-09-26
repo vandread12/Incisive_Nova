@@ -1,0 +1,26 @@
+connector:
+  name: incisive nova
+  identifier: incisive_nova
+  description: "Conector GitHub del repositorio Incisive Nova"
+  accountIdentifier: AR51kkJYQVynhdI8uMFtDA
+  orgIdentifier: default
+  projectIdentifier: incisivenova
+  type: Github
+  spec:
+    url: https://github.com/vandread12/Incisive_Nova
+    authentication:
+      type: Http
+      spec:
+        type: UsernameToken
+        spec:
+          username: vandread12
+          # Secreto gestionado en el Harness Secret Manager (identifier: incisive).
+          tokenRef: incisive
+    apiAccess:
+      type: Token
+      spec:
+        tokenRef: incisive
+    executeOnDelegate: false
+    proxy: false
+    ignoreTestConnection: false
+    type: Repo
