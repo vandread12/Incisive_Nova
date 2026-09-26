@@ -103,8 +103,9 @@ pipeline:
 
                           # 4. Desplegar en la plataforma (staging)
                           echo "Desplegando Incisive Nova en Docker Agentic Platform (staging)..."
-                          # Eliminamos el comando 'pull' y le decimos a 'up' que construya las imágenes locales
-                          docker compose -f docker-compose.yml up -d --build --remove-orphans
+                          # Forzar reconstrucción sin caché para limpiar cualquier residuo anterior
+                          docker compose -f docker-compose.yml build --no-cache api-service mcp-signer frontend
+                          docker compose -f docker-compose.yml up -d --remove-orphans
                           docker compose -f docker-compose.yml ps
                     outputVariables: []
               - step:
@@ -248,8 +249,9 @@ pipeline:
 
                           # 4. Desplegar en la plataforma (producción)
                           echo "Desplegando Incisive Nova en Docker Agentic Platform (producción)..."
-                          # Eliminamos el comando 'pull' y le decimos a 'up' que construya las imágenes locales
-                          docker compose -f docker-compose.yml up -d --build --remove-orphans
+                          # Forzar reconstrucción sin caché para limpiar cualquier residuo anterior
+                          docker compose -f docker-compose.yml build --no-cache api-service mcp-signer frontend
+                          docker compose -f docker-compose.yml up -d --remove-orphans
                     outputVariables: []
         failureStrategies:
           - onFailure:
