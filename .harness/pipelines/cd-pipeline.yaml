@@ -121,15 +121,22 @@ pipeline:
                       type: Inline
                       spec:
                         script: |
-                          echo "Verificando salud del api-service..."
+                          # El script corre en el HOST del delegado, no dentro de la red
+                          # Docker de Compose. Por eso el hostname "api-service" no resuelve;
+                          # se usa el puerto publicado en el host (mapeo 8000:8000).
+                          echo "Verificando salud del api-service en localhost:8000..."
                           for i in $(seq 1 10); do
-                            if curl -fsS http://api-service:8000/health; then
+                            if curl -fsS http://localhost:8000/health; then
                               echo "api-service saludable"
                               exit 0
                             fi
+                            echo "Intento $i: api-service aún no responde, reintentando..."
                             sleep 6
                           done
-                          echo "api-service no respondió a tiempo"
+                          echo "api-service no respondió a tiempo. Estado de los contenedores:"
+                          export PATH="/tmp/docker-bin:$PATH"
+                          docker compose -f /tmp/incisive-nova/docker-compose.yml ps || true
+                          docker compose -f /tmp/incisive-nova/docker-compose.yml logs --tail=50 api-service || true
                           exit 1
                     outputVariables: []
         failureStrategies:
