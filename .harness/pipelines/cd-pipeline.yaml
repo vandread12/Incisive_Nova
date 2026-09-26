@@ -47,6 +47,12 @@ pipeline:
                       - name: DOCKER_AGENTIC_TOKEN
                         type: Secret
                         value: <+pipeline.variables.DOCKER_AGENTIC_TOKEN>
+                      - name: DOCKER_HUB_USER
+                        type: String
+                        value: vandread12
+                      - name: DOCKER_HUB_TOKEN
+                        type: Secret
+                        value: docker_hub_token
                       - name: STELLAR_SECRET_SEED
                         type: Secret
                         value: stellar_secret_seed
@@ -93,6 +99,26 @@ pipeline:
                               echo "Descargando Docker Compose..."
                               curl -fsSL https://github.com/docker/compose/releases/download/v2.24.5/docker-compose-linux-x86_64 -o ~/.docker/cli-plugins/docker-compose
                               chmod +x ~/.docker/cli-plugins/docker-compose
+                          fi
+
+                          # 2b. Login en Docker Hub (evita rate limits al hacer pull de imágenes base)
+                          if [ -n "${DOCKER_HUB_TOKEN:-}" ]; then
+                              echo "Autenticando en Docker Hub como ${DOCKER_HUB_USER}..."
+                              echo "$DOCKER_HUB_TOKEN" | docker login -u "$DOCKER_HUB_USER" --password-stdin
+                          fi
+
+                          # 2c. Validar que los secretos críticos del backend estén presentes.
+                          #     Evita desplegar con SERVER_SIGNING_KEY vacío (causa el 500 en /auth/challenge).
+                          missing=""
+                          for var in SERVER_SIGNING_KEY SERVER_PUBLIC_KEY JWT_SECRET_KEY POSTGRES_PASSWORD; do
+                              if [ -z "$(eval echo \$$var)" ]; then
+                                  missing="$missing $var"
+                              fi
+                          done
+                          if [ -n "$missing" ]; then
+                              echo "ERROR: faltan secretos requeridos:$missing"
+                              echo "Regístralos en el Harness Secret Manager antes de desplegar."
+                              exit 1
                           fi
 
                           # 3. Obtener los manifiestos del repositorio
@@ -171,6 +197,12 @@ pipeline:
                       - name: DOCKER_AGENTIC_TOKEN
                         type: Secret
                         value: <+pipeline.variables.DOCKER_AGENTIC_TOKEN>
+                      - name: DOCKER_HUB_USER
+                        type: String
+                        value: vandread12
+                      - name: DOCKER_HUB_TOKEN
+                        type: Secret
+                        value: docker_hub_token
                       - name: STELLAR_SECRET_SEED
                         type: Secret
                         value: stellar_secret_seed
@@ -217,6 +249,25 @@ pipeline:
                               echo "Descargando Docker Compose..."
                               curl -fsSL https://github.com/docker/compose/releases/download/v2.24.5/docker-compose-linux-x86_64 -o ~/.docker/cli-plugins/docker-compose
                               chmod +x ~/.docker/cli-plugins/docker-compose
+                          fi
+
+                          # 2b. Login en Docker Hub (evita rate limits al hacer pull de imágenes base)
+                          if [ -n "${DOCKER_HUB_TOKEN:-}" ]; then
+                              echo "Autenticando en Docker Hub como ${DOCKER_HUB_USER}..."
+                              echo "$DOCKER_HUB_TOKEN" | docker login -u "$DOCKER_HUB_USER" --password-stdin
+                          fi
+
+                          # 2c. Validar que los secretos críticos del backend estén presentes.
+                          missing=""
+                          for var in SERVER_SIGNING_KEY SERVER_PUBLIC_KEY JWT_SECRET_KEY POSTGRES_PASSWORD; do
+                              if [ -z "$(eval echo \$$var)" ]; then
+                                  missing="$missing $var"
+                              fi
+                          done
+                          if [ -n "$missing" ]; then
+                              echo "ERROR: faltan secretos requeridos:$missing"
+                              echo "Regístralos en el Harness Secret Manager antes de desplegar."
+                              exit 1
                           fi
 
                           # 3. Obtener los manifiestos del repositorio
