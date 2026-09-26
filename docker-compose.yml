@@ -22,6 +22,8 @@ services:
       JEV_API_KEY: ${JEV_API_KEY}
       ABROAD_API_KEY: ${ABROAD_API_KEY}
       MCP_SERVER_URL: https://mcp-signer:9090
+      # Orígenes permitidos para CORS (frontend). Ajustar PUBLIC_HOST a la IP/dominio público.
+      CORS_ALLOW_ORIGINS: http://${PUBLIC_HOST:-35.171.19.86}:3000,http://localhost:3000
     depends_on:
       - postgres
       - redis
@@ -70,10 +72,15 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      # NEXT_PUBLIC_* se incrusta en build-time. Debe apuntar a la URL pública
+      # del backend (IP del EC2), accesible desde el navegador del usuario.
+      args:
+        NEXT_PUBLIC_API_URL: ${PUBLIC_API_URL:-http://35.171.19.86:8000}
+        NEXT_PUBLIC_STELLAR_NETWORK: testnet
     ports:
       - "3000:3000"
     environment:
-      NEXT_PUBLIC_API_URL: http://api-service:8000
+      NEXT_PUBLIC_API_URL: ${PUBLIC_API_URL:-http://35.171.19.86:8000}
       NEXT_PUBLIC_APP_NAME: "Incisive Nova"
       NEXT_PUBLIC_STELLAR_NETWORK: testnet
     depends_on:

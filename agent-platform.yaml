@@ -66,13 +66,17 @@ components:
     type: nextjs
     image: incisive-nova-frontend:latest
     port: 3000
-    env:
-      - NEXT_PUBLIC_API_URL=http://localhost:8000
-      - NEXT_PUBLIC_APP_NAME="Incisive Nova"
-      - NEXT_PUBLIC_STELLAR_NETWORK=testnet
+    # NEXT_PUBLIC_API_URL debe apuntar a la IP/dominio público del backend
+    # (accesible desde el navegador del usuario), no a localhost/hostname interno.
     build:
       context: ./frontend
-      dockerfile: Dockerfile.frontend
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: http://35.171.19.86:8000
+    env:
+      - NEXT_PUBLIC_API_URL=http://35.171.19.86:8000
+      - NEXT_PUBLIC_APP_NAME="Incisive Nova"
+      - NEXT_PUBLIC_STELLAR_NETWORK=testnet
 
 # Network Configuration
 network:

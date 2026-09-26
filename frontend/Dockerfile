@@ -18,7 +18,14 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-ENV NEXT_TELEMETRY_DISABLED=1
+# Las variables NEXT_PUBLIC_* se incrustan en tiempo de build. Se reciben como
+# build args y se exponen como ENV antes de 'npm run build' para que el bundle
+# del cliente apunte al backend correcto (p. ej. la IP pública del EC2).
+ARG NEXT_PUBLIC_API_URL=http://localhost:8000
+ARG NEXT_PUBLIC_STELLAR_NETWORK=testnet
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL \
+    NEXT_PUBLIC_STELLAR_NETWORK=$NEXT_PUBLIC_STELLAR_NETWORK \
+    NEXT_TELEMETRY_DISABLED=1
 RUN npm run build
 
 # ---- Stage 3: runtime ----
