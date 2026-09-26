@@ -6,6 +6,20 @@ pipeline:
   tags:
     project: incisive-nova
     type: cd
+  variables:
+    # Token de autenticación con la Docker Agentic Platform. Su valor por
+    # defecto se resuelve desde el Harness Secret Manager; el trigger de CD
+    # lo sobreescribe con el secreto `docker_agentic_token`.
+    - name: DOCKER_AGENTIC_TOKEN
+      type: Secret
+      description: Token de despliegue en la Docker Agentic Platform
+      required: true
+      value: docker_agentic_token
+    - name: DEPLOY_COMMIT
+      type: String
+      description: SHA del commit que dispara el despliegue
+      required: false
+      value: <+input>
   stages:
     # ------------------------------------------------------------------
     # 1. Despliegue a Staging (Docker Agentic Platform)
@@ -35,6 +49,7 @@ pipeline:
                     shell: Sh
                     # Secretos inyectados desde el Harness Secret Manager.
                     envVariables:
+                      DOCKER_AGENTIC_TOKEN: <+pipeline.variables.DOCKER_AGENTIC_TOKEN>
                       STELLAR_SECRET_SEED: <+secrets.getValue("stellar_secret_seed")>
                       SERVER_SIGNING_KEY: <+secrets.getValue("server_signing_key")>
                       SERVER_PUBLIC_KEY: <+secrets.getValue("server_public_key")>
@@ -45,6 +60,7 @@ pipeline:
                       IMAGE_TAG: <+pipeline.sequenceId>
                     command: |
                       echo "Desplegando Incisive Nova en Docker Agentic Platform (staging)..."
+                      # Autenticación con la plataforma vía DOCKER_AGENTIC_TOKEN.
                       # Orquesta el stack definido en agent-platform.yaml.
                       docker compose -f docker-compose.yml pull
                       docker compose -f docker-compose.yml up -d --remove-orphans
@@ -117,6 +133,7 @@ pipeline:
                   spec:
                     shell: Sh
                     envVariables:
+                      DOCKER_AGENTIC_TOKEN: <+pipeline.variables.DOCKER_AGENTIC_TOKEN>
                       STELLAR_SECRET_SEED: <+secrets.getValue("stellar_secret_seed")>
                       SERVER_SIGNING_KEY: <+secrets.getValue("server_signing_key")>
                       SERVER_PUBLIC_KEY: <+secrets.getValue("server_public_key")>
@@ -127,6 +144,7 @@ pipeline:
                       IMAGE_TAG: <+pipeline.sequenceId>
                     command: |
                       echo "Desplegando Incisive Nova en Docker Agentic Platform (producción)..."
+                      # Autenticación con la plataforma vía DOCKER_AGENTIC_TOKEN.
                       docker compose -f docker-compose.yml pull
                       docker compose -f docker-compose.yml up -d --remove-orphans
           failureStrategies:

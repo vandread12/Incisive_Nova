@@ -237,6 +237,8 @@ Infraestructura como código (pipeline-as-code) para CI/CD con Harness, más el 
 - [x] `services/incisive_nova_platform.yaml` (api + mcp-signer + frontend)
 - [x] `secrets/secrets_reference.yaml` (referencias, sin valores)
 - [x] `gitleaks-stellar.toml` (reglas para semillas `S...` y claves ed25519)
+- [x] `triggers/ci-on-pull-request.yaml` — CI automático ante cualquier PR a main/master (Open/Reopen/Synchronize)
+- [x] `triggers/cd-on-push-main.yaml` — CD ante push/merge a main/master, inyecta `DOCKER_AGENTIC_TOKEN`
 
 #### Empaquetado Docker multi-stage
 - [x] `backend/Dockerfile` (API), `backend/Dockerfile.mcp` (signer aislado), `frontend/Dockerfile` (Next standalone)
@@ -426,8 +428,8 @@ Infraestructura como código (pipeline-as-code) para CI/CD con Harness, más el 
 - [x] Validar estructura de pipelines (stages/spec/identifiers) contra esquema Harness
 - [x] `.gitignore` de raíz protege `.env`, `keys/`, `*.pem`, node_modules, cachés
 - [x] Verificado: no hay semillas Stellar (`S...`) ni `.env` con secretos en el repo
+- [x] Triggers GitOps definidos como código: CI en PR, CD en push/merge a main/master (`.harness/triggers/`)
 - [~] Ejecutar pipeline de CI de prueba y verificar reportes JUnit (requiere cuenta)
-- [~] Configurar triggers (push/PR) para el pipeline de CI (requiere cuenta)
 
 ## Configuración de Paquetes
 

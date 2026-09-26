@@ -1,0 +1,41 @@
+trigger:
+  name: CI on Pull Request
+  identifier: ci_on_pull_request
+  enabled: true
+  orgIdentifier: default
+  projectIdentifier: incisive_nova
+  pipelineIdentifier: incisive_nova_ci
+  description: >-
+    Dispara el pipeline de Integración Continua ante cualquier Pull Request
+    hacia main/master: tests, validaciones y escaneo de seguridad (SAST/Gitleaks).
+  tags:
+    project: incisive-nova
+    stage: ci
+  source:
+    type: Webhook
+    spec:
+      type: Github
+      spec:
+        type: PullRequest
+        spec:
+          connectorRef: github_repo
+          autoAbortPreviousExecutions: true
+          payloadConditions:
+            - key: targetBranch
+              operator: In
+              value: main, master
+          headerConditions: []
+          actions:
+            - Open
+            - Reopen
+            - Synchronize
+  inputYaml: |
+    pipeline:
+      identifier: incisive_nova_ci
+      properties:
+        ci:
+          codebase:
+            build:
+              type: PR
+              spec:
+                number: <+trigger.prNumber>

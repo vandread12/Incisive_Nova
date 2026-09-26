@@ -1,0 +1,39 @@
+trigger:
+  name: CD on Push to Main
+  identifier: cd_on_push_main
+  enabled: true
+  orgIdentifier: default
+  projectIdentifier: incisive_nova
+  pipelineIdentifier: incisive_nova_cd
+  description: >-
+    Dispara el pipeline de Despliegue Continuo ante cualquier push o merge
+    sobre main/master. Despliega en la Docker Agentic Platform inyectando el
+    secreto DOCKER_AGENTIC_TOKEN. Un merge de PR emite un evento Push sobre la
+    rama destino, por lo que este trigger cubre push directos y merges.
+  tags:
+    project: incisive-nova
+    stage: cd
+  source:
+    type: Webhook
+    spec:
+      type: Github
+      spec:
+        type: Push
+        spec:
+          connectorRef: github_repo
+          autoAbortPreviousExecutions: false
+          payloadConditions:
+            - key: targetBranch
+              operator: In
+              value: main, master
+          headerConditions: []
+  inputYaml: |
+    pipeline:
+      identifier: incisive_nova_cd
+      variables:
+        - name: DOCKER_AGENTIC_TOKEN
+          type: Secret
+          value: docker_agentic_token
+        - name: DEPLOY_COMMIT
+          type: String
+          value: <+trigger.commitSha>
