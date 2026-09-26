@@ -19,7 +19,7 @@ pipeline:
     #    Stellar antes de gastar recursos en tests/builds.
     # ------------------------------------------------------------------
     - stage:
-        name: Security Scan (SAST)
+        name: Security Scan SAST
         identifier: security_scan
         type: SecurityTests
         spec:
@@ -120,7 +120,7 @@ pipeline:
                 steps:
                   - step:
                       type: Run
-                      name: Next.js Type Check & Lint
+                      name: Next.js Type Check and Lint
                       identifier: nextjs_type_check
                       spec:
                         connectorRef: docker_registry
@@ -132,11 +132,11 @@ pipeline:
                           npm run type-check
                           npm run lint
     # ------------------------------------------------------------------
-    # 3. Build & push de imágenes Docker multi-stage
+    # 3. Build and push de imágenes Docker multi-stage
     #    (backend orquestador, mcp-signer y frontend)
     # ------------------------------------------------------------------
     - stage:
-        name: Build & Push Images
+        name: Build and Push Images
         identifier: build_push
         type: CI
         spec:
