@@ -66,6 +66,12 @@ pipeline:
                         --verbose \
                         --exit-code 1 \
                         --config .harness/gitleaks-stellar.toml
+        failureStrategies:
+          - onFailure:
+              errors:
+                - AllErrors
+              action:
+                type: MarkAsFailure
     # ------------------------------------------------------------------
     # 2. Tests del backend (pytest) y validación de tipos del frontend
     #    Corren en paralelo para reducir el tiempo total del PR.
@@ -104,6 +110,12 @@ pipeline:
                           spec:
                             paths:
                               - backend/report.xml
+            failureStrategies:
+              - onFailure:
+                  errors:
+                    - AllErrors
+                  action:
+                    type: MarkAsFailure
         - stage:
             name: Test Frontend
             identifier: test_frontend
@@ -131,6 +143,12 @@ pipeline:
                           npm ci --ignore-scripts
                           npm run type-check
                           npm run lint
+            failureStrategies:
+              - onFailure:
+                  errors:
+                    - AllErrors
+                  action:
+                    type: MarkAsFailure
     # ------------------------------------------------------------------
     # 3. Build and push de imágenes Docker multi-stage
     #    (backend orquestador, mcp-signer y frontend)
@@ -185,3 +203,9 @@ pipeline:
                       - latest
                     dockerfile: frontend/Dockerfile
                     context: frontend
+        failureStrategies:
+          - onFailure:
+              errors:
+                - AllErrors
+              action:
+                type: MarkAsFailure

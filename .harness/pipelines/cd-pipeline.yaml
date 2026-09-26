@@ -82,6 +82,12 @@ pipeline:
                       done
                       echo "api-service no respondió a tiempo"
                       exit 1
+        failureStrategies:
+          - onFailure:
+              errors:
+                - AllErrors
+              action:
+                type: StageRollback
     # ------------------------------------------------------------------
     # 2. Puerta de aprobación manual antes de producción
     # ------------------------------------------------------------------
@@ -108,6 +114,12 @@ pipeline:
                         - _project_all_users
                       minimumCount: 1
                       disallowPipelineExecutor: false
+        failureStrategies:
+          - onFailure:
+              errors:
+                - AllErrors
+              action:
+                type: MarkAsFailure
     # ------------------------------------------------------------------
     # 3. Despliegue a Producción (Docker Agentic Platform)
     # ------------------------------------------------------------------
@@ -147,9 +159,9 @@ pipeline:
                       # Autenticación con la plataforma vía DOCKER_AGENTIC_TOKEN.
                       docker compose -f docker-compose.yml pull
                       docker compose -f docker-compose.yml up -d --remove-orphans
-          failureStrategies:
-            - onFailure:
-                errors:
-                  - AllErrors
-                action:
-                  type: StageRollback
+        failureStrategies:
+          - onFailure:
+              errors:
+                - AllErrors
+              action:
+                type: StageRollback
