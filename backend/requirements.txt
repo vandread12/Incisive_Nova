@@ -5,6 +5,8 @@
 fastapi>=0.110,<1.0
 # starlette pineado: la 1.7.0 introduce un routing incompatible con FastAPI 0.141.
 starlette>=0.40,<0.50
+# Servidor ASGI para ejecutar la app (CMD del Dockerfile: uvicorn src.main:app).
+uvicorn[standard]>=0.27,<1.0
 
 # Validación de datos
 pydantic>=2.5,<3.0
