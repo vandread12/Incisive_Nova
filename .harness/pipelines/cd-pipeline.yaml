@@ -76,7 +76,7 @@ pipeline:
                       spec:
                         script: |
                           set -euo pipefail
-                          # Instalar cliente Docker CLI temporalmente sin requerir permisos root
+                          # 1. Instalar cliente Docker CLI (sin root)
                           if ! command -v docker &> /dev/null; then
                               echo "Descargando Docker CLI..."
                               curl -fsSL https://download.docker.com/linux/static/stable/x86_64/docker-25.0.3.tgz -o docker.tgz
@@ -84,27 +84,26 @@ pipeline:
                               mkdir -p /tmp/docker-bin
                               mv docker/docker /tmp/docker-bin/
                               rm -rf docker docker.tgz
-                              echo "Docker CLI instalado exitosamente."
                           fi
-
-                          # Agregamos la ruta temporal al PATH para que reconozca el comando
                           export PATH="/tmp/docker-bin:$PATH"
 
-                          # Instalar el plugin de Docker Compose v2 (sin root) si no está disponible
-                          if ! docker compose version &> /dev/null; then
-                              echo "Descargando plugin de Docker Compose v2..."
-                              mkdir -p /tmp/docker-bin/cli-plugins
-                              curl -fsSL https://github.com/docker/compose/releases/download/v2.29.7/docker-compose-linux-x86_64 -o /tmp/docker-bin/cli-plugins/docker-compose
-                              chmod +x /tmp/docker-bin/cli-plugins/docker-compose
-                              # Docker busca los cli-plugins en ~/.docker/cli-plugins
-                              mkdir -p "$HOME/.docker/cli-plugins"
-                              cp /tmp/docker-bin/cli-plugins/docker-compose "$HOME/.docker/cli-plugins/docker-compose"
-                              echo "Docker Compose v2 instalado exitosamente."
+                          # 2. Instalar el plugin de Docker Compose
+                          mkdir -p ~/.docker/cli-plugins
+                          if [ ! -f ~/.docker/cli-plugins/docker-compose ]; then
+                              echo "Descargando Docker Compose..."
+                              curl -fsSL https://github.com/docker/compose/releases/download/v2.24.5/docker-compose-linux-x86_64 -o ~/.docker/cli-plugins/docker-compose
+                              chmod +x ~/.docker/cli-plugins/docker-compose
                           fi
 
+                          # 3. Obtener los manifiestos del repositorio
+                          echo "Clonando repositorio..."
+                          rm -rf /tmp/incisive-nova
+                          git clone https://github.com/vandread12/Incisive_Nova.git /tmp/incisive-nova
+                          cd /tmp/incisive-nova
+
+                          # 4. Desplegar en la plataforma (staging)
                           echo "Desplegando Incisive Nova en Docker Agentic Platform (staging)..."
                           # Autenticación con la plataforma vía DOCKER_AGENTIC_TOKEN.
-                          # Orquesta el stack definido en agent-platform.yaml.
                           docker compose -f docker-compose.yml pull
                           docker compose -f docker-compose.yml up -d --remove-orphans
                           docker compose -f docker-compose.yml ps
@@ -223,7 +222,7 @@ pipeline:
                       spec:
                         script: |
                           set -euo pipefail
-                          # Instalar cliente Docker CLI temporalmente sin requerir permisos root
+                          # 1. Instalar cliente Docker CLI (sin root)
                           if ! command -v docker &> /dev/null; then
                               echo "Descargando Docker CLI..."
                               curl -fsSL https://download.docker.com/linux/static/stable/x86_64/docker-25.0.3.tgz -o docker.tgz
@@ -231,24 +230,24 @@ pipeline:
                               mkdir -p /tmp/docker-bin
                               mv docker/docker /tmp/docker-bin/
                               rm -rf docker docker.tgz
-                              echo "Docker CLI instalado exitosamente."
                           fi
-
-                          # Agregamos la ruta temporal al PATH para que reconozca el comando
                           export PATH="/tmp/docker-bin:$PATH"
 
-                          # Instalar el plugin de Docker Compose v2 (sin root) si no está disponible
-                          if ! docker compose version &> /dev/null; then
-                              echo "Descargando plugin de Docker Compose v2..."
-                              mkdir -p /tmp/docker-bin/cli-plugins
-                              curl -fsSL https://github.com/docker/compose/releases/download/v2.29.7/docker-compose-linux-x86_64 -o /tmp/docker-bin/cli-plugins/docker-compose
-                              chmod +x /tmp/docker-bin/cli-plugins/docker-compose
-                              # Docker busca los cli-plugins en ~/.docker/cli-plugins
-                              mkdir -p "$HOME/.docker/cli-plugins"
-                              cp /tmp/docker-bin/cli-plugins/docker-compose "$HOME/.docker/cli-plugins/docker-compose"
-                              echo "Docker Compose v2 instalado exitosamente."
+                          # 2. Instalar el plugin de Docker Compose
+                          mkdir -p ~/.docker/cli-plugins
+                          if [ ! -f ~/.docker/cli-plugins/docker-compose ]; then
+                              echo "Descargando Docker Compose..."
+                              curl -fsSL https://github.com/docker/compose/releases/download/v2.24.5/docker-compose-linux-x86_64 -o ~/.docker/cli-plugins/docker-compose
+                              chmod +x ~/.docker/cli-plugins/docker-compose
                           fi
 
+                          # 3. Obtener los manifiestos del repositorio
+                          echo "Clonando repositorio..."
+                          rm -rf /tmp/incisive-nova
+                          git clone https://github.com/vandread12/Incisive_Nova.git /tmp/incisive-nova
+                          cd /tmp/incisive-nova
+
+                          # 4. Desplegar en la plataforma (producción)
                           echo "Desplegando Incisive Nova en Docker Agentic Platform (producción)..."
                           # Autenticación con la plataforma vía DOCKER_AGENTIC_TOKEN.
                           docker compose -f docker-compose.yml pull
