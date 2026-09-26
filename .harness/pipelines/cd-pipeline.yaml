@@ -103,9 +103,8 @@ pipeline:
 
                           # 4. Desplegar en la plataforma (staging)
                           echo "Desplegando Incisive Nova en Docker Agentic Platform (staging)..."
-                          # Autenticación con la plataforma vía DOCKER_AGENTIC_TOKEN.
-                          docker compose -f docker-compose.yml pull
-                          docker compose -f docker-compose.yml up -d --remove-orphans
+                          # Eliminamos el comando 'pull' y le decimos a 'up' que construya las imágenes locales
+                          docker compose -f docker-compose.yml up -d --build --remove-orphans
                           docker compose -f docker-compose.yml ps
                     outputVariables: []
               - step:
@@ -249,9 +248,8 @@ pipeline:
 
                           # 4. Desplegar en la plataforma (producción)
                           echo "Desplegando Incisive Nova en Docker Agentic Platform (producción)..."
-                          # Autenticación con la plataforma vía DOCKER_AGENTIC_TOKEN.
-                          docker compose -f docker-compose.yml pull
-                          docker compose -f docker-compose.yml up -d --remove-orphans
+                          # Eliminamos el comando 'pull' y le decimos a 'up' que construya las imágenes locales
+                          docker compose -f docker-compose.yml up -d --build --remove-orphans
                     outputVariables: []
         failureStrategies:
           - onFailure:
