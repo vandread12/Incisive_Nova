@@ -49,7 +49,7 @@ pipeline:
                         value: <+pipeline.variables.DOCKER_AGENTIC_TOKEN>
                       - name: DOCKER_HUB_USER
                         type: String
-                        value: vandread12
+                        value: vandread13
                       - name: DOCKER_HUB_TOKEN
                         type: Secret
                         value: docker_hub_token
@@ -199,7 +199,7 @@ pipeline:
                         value: <+pipeline.variables.DOCKER_AGENTIC_TOKEN>
                       - name: DOCKER_HUB_USER
                         type: String
-                        value: vandread12
+                        value: vandread13
                       - name: DOCKER_HUB_TOKEN
                         type: Secret
                         value: docker_hub_token
