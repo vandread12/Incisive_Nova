@@ -23,9 +23,9 @@ pipeline:
   stages:
     # ------------------------------------------------------------------
     # 1. Despliegue a Staging (Docker Agentic Platform)
-    #    Custom Stage con pasos Run (CLI). No requiere Deployment Template ni
-    #    "Fetch Instances": es un despliegue basado en scripts sobre Cloud
-    #    Sandboxes. Los secretos se inyectan en runtime desde el Secret Manager;
+    #    Custom Stage con pasos ShellScript (CLI). Los Custom Stages no admiten
+    #    el step "Run" (exclusivo de CI); usan "ShellScript". Los secretos se
+    #    inyectan como environmentVariables en runtime desde el Secret Manager;
     #    nunca aparecen en el YAML ni en logs.
     # ------------------------------------------------------------------
     - stage:
@@ -36,47 +36,76 @@ pipeline:
           execution:
             steps:
               - step:
-                  type: Run
+                  type: ShellScript
                   name: Deploy Stack to Docker Agentic Platform
                   identifier: deploy_stack_staging
-                  spec:
-                    shell: Sh
-                    envVariables:
-                      DOCKER_AGENTIC_TOKEN: <+pipeline.variables.DOCKER_AGENTIC_TOKEN>
-                      STELLAR_SECRET_SEED: <+secrets.getValue("stellar_secret_seed")>
-                      SERVER_SIGNING_KEY: <+secrets.getValue("server_signing_key")>
-                      SERVER_PUBLIC_KEY: <+secrets.getValue("server_public_key")>
-                      JWT_SECRET_KEY: <+secrets.getValue("jwt_secret_key")>
-                      JEV_API_KEY: <+secrets.getValue("jev_api_key")>
-                      ABROAD_API_KEY: <+secrets.getValue("abroad_api_key")>
-                      POSTGRES_PASSWORD: <+secrets.getValue("postgres_password")>
-                      IMAGE_TAG: <+pipeline.sequenceId>
-                    command: |
-                      echo "Desplegando Incisive Nova en Docker Agentic Platform (staging)..."
-                      # Autenticación con la plataforma vía DOCKER_AGENTIC_TOKEN.
-                      # Orquesta el stack definido en agent-platform.yaml.
-                      docker compose -f docker-compose.yml pull
-                      docker compose -f docker-compose.yml up -d --remove-orphans
-                      docker compose -f docker-compose.yml ps
                   timeout: 15m
+                  spec:
+                    shell: Bash
+                    onDelegate: true
+                    environmentVariables:
+                      - name: DOCKER_AGENTIC_TOKEN
+                        type: Secret
+                        value: <+pipeline.variables.DOCKER_AGENTIC_TOKEN>
+                      - name: STELLAR_SECRET_SEED
+                        type: Secret
+                        value: stellar_secret_seed
+                      - name: SERVER_SIGNING_KEY
+                        type: Secret
+                        value: server_signing_key
+                      - name: SERVER_PUBLIC_KEY
+                        type: Secret
+                        value: server_public_key
+                      - name: JWT_SECRET_KEY
+                        type: Secret
+                        value: jwt_secret_key
+                      - name: JEV_API_KEY
+                        type: Secret
+                        value: jev_api_key
+                      - name: ABROAD_API_KEY
+                        type: Secret
+                        value: abroad_api_key
+                      - name: POSTGRES_PASSWORD
+                        type: Secret
+                        value: postgres_password
+                      - name: IMAGE_TAG
+                        type: String
+                        value: <+pipeline.sequenceId>
+                    source:
+                      type: Inline
+                      spec:
+                        script: |
+                          echo "Desplegando Incisive Nova en Docker Agentic Platform (staging)..."
+                          # Autenticación con la plataforma vía DOCKER_AGENTIC_TOKEN.
+                          # Orquesta el stack definido en agent-platform.yaml.
+                          docker compose -f docker-compose.yml pull
+                          docker compose -f docker-compose.yml up -d --remove-orphans
+                          docker compose -f docker-compose.yml ps
+                    outputVariables: []
               - step:
-                  type: Run
+                  type: ShellScript
                   name: Health Check
                   identifier: health_check_staging
-                  spec:
-                    shell: Sh
-                    command: |
-                      echo "Verificando salud del api-service..."
-                      for i in $(seq 1 10); do
-                        if curl -fsS http://api-service:8000/health; then
-                          echo "api-service saludable"
-                          exit 0
-                        fi
-                        sleep 6
-                      done
-                      echo "api-service no respondió a tiempo"
-                      exit 1
                   timeout: 5m
+                  spec:
+                    shell: Bash
+                    onDelegate: true
+                    environmentVariables: []
+                    source:
+                      type: Inline
+                      spec:
+                        script: |
+                          echo "Verificando salud del api-service..."
+                          for i in $(seq 1 10); do
+                            if curl -fsS http://api-service:8000/health; then
+                              echo "api-service saludable"
+                              exit 0
+                            fi
+                            sleep 6
+                          done
+                          echo "api-service no respondió a tiempo"
+                          exit 1
+                    outputVariables: []
         failureStrategies:
           - onFailure:
               errors:
@@ -117,7 +146,7 @@ pipeline:
                 type: MarkAsFailure
     # ------------------------------------------------------------------
     # 3. Despliegue a Producción (Docker Agentic Platform)
-    #    Custom Stage con pasos Run (CLI), igual que staging.
+    #    Custom Stage con paso ShellScript (CLI), igual que staging.
     # ------------------------------------------------------------------
     - stage:
         name: Deploy Production
@@ -127,27 +156,50 @@ pipeline:
           execution:
             steps:
               - step:
-                  type: Run
+                  type: ShellScript
                   name: Deploy Stack to Production
                   identifier: deploy_stack_production
-                  spec:
-                    shell: Sh
-                    envVariables:
-                      DOCKER_AGENTIC_TOKEN: <+pipeline.variables.DOCKER_AGENTIC_TOKEN>
-                      STELLAR_SECRET_SEED: <+secrets.getValue("stellar_secret_seed")>
-                      SERVER_SIGNING_KEY: <+secrets.getValue("server_signing_key")>
-                      SERVER_PUBLIC_KEY: <+secrets.getValue("server_public_key")>
-                      JWT_SECRET_KEY: <+secrets.getValue("jwt_secret_key")>
-                      JEV_API_KEY: <+secrets.getValue("jev_api_key")>
-                      ABROAD_API_KEY: <+secrets.getValue("abroad_api_key")>
-                      POSTGRES_PASSWORD: <+secrets.getValue("postgres_password")>
-                      IMAGE_TAG: <+pipeline.sequenceId>
-                    command: |
-                      echo "Desplegando Incisive Nova en Docker Agentic Platform (producción)..."
-                      # Autenticación con la plataforma vía DOCKER_AGENTIC_TOKEN.
-                      docker compose -f docker-compose.yml pull
-                      docker compose -f docker-compose.yml up -d --remove-orphans
                   timeout: 15m
+                  spec:
+                    shell: Bash
+                    onDelegate: true
+                    environmentVariables:
+                      - name: DOCKER_AGENTIC_TOKEN
+                        type: Secret
+                        value: <+pipeline.variables.DOCKER_AGENTIC_TOKEN>
+                      - name: STELLAR_SECRET_SEED
+                        type: Secret
+                        value: stellar_secret_seed
+                      - name: SERVER_SIGNING_KEY
+                        type: Secret
+                        value: server_signing_key
+                      - name: SERVER_PUBLIC_KEY
+                        type: Secret
+                        value: server_public_key
+                      - name: JWT_SECRET_KEY
+                        type: Secret
+                        value: jwt_secret_key
+                      - name: JEV_API_KEY
+                        type: Secret
+                        value: jev_api_key
+                      - name: ABROAD_API_KEY
+                        type: Secret
+                        value: abroad_api_key
+                      - name: POSTGRES_PASSWORD
+                        type: Secret
+                        value: postgres_password
+                      - name: IMAGE_TAG
+                        type: String
+                        value: <+pipeline.sequenceId>
+                    source:
+                      type: Inline
+                      spec:
+                        script: |
+                          echo "Desplegando Incisive Nova en Docker Agentic Platform (producción)..."
+                          # Autenticación con la plataforma vía DOCKER_AGENTIC_TOKEN.
+                          docker compose -f docker-compose.yml pull
+                          docker compose -f docker-compose.yml up -d --remove-orphans
+                    outputVariables: []
         failureStrategies:
           - onFailure:
               errors:
