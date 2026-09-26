@@ -101,43 +101,14 @@ pipeline:
                           git clone https://github.com/vandread12/Incisive_Nova.git /tmp/incisive-nova
                           cd /tmp/incisive-nova
 
-                          # 4. Desplegar en la plataforma (staging)
+                          # 4. Desplegar y verificar usando el estado nativo de Docker Compose
                           echo "Desplegando Incisive Nova en Docker Agentic Platform (staging)..."
-                          # Forzar reconstrucción sin caché para limpiar cualquier residuo anterior
+                          # Reconstrucción limpia (--no-cache solo es válido en 'build', no en 'up').
                           docker compose -f docker-compose.yml build --no-cache api-service mcp-signer frontend
                           docker compose -f docker-compose.yml up -d --remove-orphans
+
+                          echo "Verificando estado de los servicios..."
                           docker compose -f docker-compose.yml ps
-                    outputVariables: []
-              - step:
-                  type: ShellScript
-                  name: Health Check
-                  identifier: health_check_staging
-                  timeout: 5m
-                  spec:
-                    shell: Bash
-                    onDelegate: true
-                    environmentVariables: []
-                    source:
-                      type: Inline
-                      spec:
-                        script: |
-                          # El script corre en el HOST del delegado, no dentro de la red
-                          # Docker de Compose. Por eso el hostname "api-service" no resuelve;
-                          # se usa el puerto publicado en el host (mapeo 8000:8000).
-                          echo "Verificando salud del api-service en localhost:8000..."
-                          for i in $(seq 1 10); do
-                            if curl -fsS http://localhost:8000/health; then
-                              echo "api-service saludable"
-                              exit 0
-                            fi
-                            echo "Intento $i: api-service aún no responde, reintentando..."
-                            sleep 6
-                          done
-                          echo "api-service no respondió a tiempo. Estado de los contenedores:"
-                          export PATH="/tmp/docker-bin:$PATH"
-                          docker compose -f /tmp/incisive-nova/docker-compose.yml ps || true
-                          docker compose -f /tmp/incisive-nova/docker-compose.yml logs --tail=50 api-service || true
-                          exit 1
                     outputVariables: []
         failureStrategies:
           - onFailure:
@@ -254,11 +225,14 @@ pipeline:
                           git clone https://github.com/vandread12/Incisive_Nova.git /tmp/incisive-nova
                           cd /tmp/incisive-nova
 
-                          # 4. Desplegar en la plataforma (producción)
+                          # 4. Desplegar y verificar usando el estado nativo de Docker Compose
                           echo "Desplegando Incisive Nova en Docker Agentic Platform (producción)..."
-                          # Forzar reconstrucción sin caché para limpiar cualquier residuo anterior
+                          # Reconstrucción limpia (--no-cache solo es válido en 'build', no en 'up').
                           docker compose -f docker-compose.yml build --no-cache api-service mcp-signer frontend
                           docker compose -f docker-compose.yml up -d --remove-orphans
+
+                          echo "Verificando estado de los servicios..."
+                          docker compose -f docker-compose.yml ps
                     outputVariables: []
         failureStrategies:
           - onFailure:
