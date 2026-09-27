@@ -17,6 +17,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { SESSION_COOKIE_NAME, SESSION_MAX_AGE } from "@/lib/config";
 import type { TokenResponse } from "@/types/auth";
 
+/**
+ * Flag Secure de la cookie. Se controla con COOKIE_SECURE en vez de NODE_ENV
+ * porque el despliegue actual usa HTTP (sin TLS): una cookie Secure no se
+ * reenvía por HTTP y rompería el flujo de sesión. Poner COOKIE_SECURE=true
+ * cuando el frontend sirva por HTTPS.
+ */
+const COOKIE_SECURE = process.env.COOKIE_SECURE === "true";
+
 export async function POST(request: NextRequest): Promise<NextResponse> {
   let body: Partial<TokenResponse>;
   try {
@@ -46,7 +54,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     name: SESSION_COOKIE_NAME,
     value: token,
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: COOKIE_SECURE,
     sameSite: "lax",
     path: "/",
     maxAge,
@@ -60,7 +68,7 @@ export async function DELETE(): Promise<NextResponse> {
     name: SESSION_COOKIE_NAME,
     value: "",
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: COOKIE_SECURE,
     sameSite: "lax",
     path: "/",
     maxAge: 0,
