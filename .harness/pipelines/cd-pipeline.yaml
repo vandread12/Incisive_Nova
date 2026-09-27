@@ -101,10 +101,12 @@ pipeline:
                               chmod +x ~/.docker/cli-plugins/docker-compose
                           fi
 
-                          # 2b. Login en Docker Hub (evita rate limits al hacer pull de imágenes base)
+                          # 2b. Login en Docker Hub (evita rate limits al hacer pull de imágenes base).
+                          # Si falla el login (credenciales incorrectas), se omite pero no bloquea.
                           if [ -n "${DOCKER_HUB_TOKEN:-}" ]; then
                               echo "Autenticando en Docker Hub como ${DOCKER_HUB_USER}..."
-                              echo "$DOCKER_HUB_TOKEN" | docker login -u "$DOCKER_HUB_USER" --password-stdin
+                              echo "$DOCKER_HUB_TOKEN" | docker login -u "$DOCKER_HUB_USER" --password-stdin || \
+                                  echo "ADVERTENCIA: docker login falló (credenciales). Continuando sin autenticación..."
                           fi
 
                           # 2c. Validar que los secretos críticos del backend estén presentes.
@@ -251,10 +253,12 @@ pipeline:
                               chmod +x ~/.docker/cli-plugins/docker-compose
                           fi
 
-                          # 2b. Login en Docker Hub (evita rate limits al hacer pull de imágenes base)
+                          # 2b. Login en Docker Hub (evita rate limits al hacer pull de imágenes base).
+                          # Si falla el login (credenciales incorrectas), se omite pero no bloquea.
                           if [ -n "${DOCKER_HUB_TOKEN:-}" ]; then
                               echo "Autenticando en Docker Hub como ${DOCKER_HUB_USER}..."
-                              echo "$DOCKER_HUB_TOKEN" | docker login -u "$DOCKER_HUB_USER" --password-stdin
+                              echo "$DOCKER_HUB_TOKEN" | docker login -u "$DOCKER_HUB_USER" --password-stdin || \
+                                  echo "ADVERTENCIA: docker login falló (credenciales). Continuando sin autenticación..."
                           fi
 
                           # 2c. Validar que los secretos críticos del backend estén presentes.
