@@ -132,7 +132,8 @@ pipeline:
                           # 4. Desplegar y verificar usando el estado nativo de Docker Compose
                           echo "Desplegando Incisive Nova en Docker Agentic Platform (staging)..."
                           # Reconstrucción limpia (--no-cache solo es válido en 'build', no en 'up').
-                          docker compose -f docker-compose.yml build --no-cache api-service mcp-signer frontend
+                          # mcp-signer excluido hasta implementar el Módulo 3.
+                          docker compose -f docker-compose.yml build --no-cache api-service frontend
                           docker compose -f docker-compose.yml up -d --remove-orphans
 
                           echo "Verificando estado de los servicios..."
@@ -283,7 +284,8 @@ pipeline:
                           # 4. Desplegar y verificar usando el estado nativo de Docker Compose
                           echo "Desplegando Incisive Nova en Docker Agentic Platform (producción)..."
                           # Reconstrucción limpia (--no-cache solo es válido en 'build', no en 'up').
-                          docker compose -f docker-compose.yml build --no-cache api-service mcp-signer frontend
+                          # mcp-signer excluido hasta implementar el Módulo 3.
+                          docker compose -f docker-compose.yml build --no-cache api-service frontend
                           docker compose -f docker-compose.yml up -d --remove-orphans
 
                           echo "Verificando estado de los servicios..."

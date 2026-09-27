@@ -27,29 +27,29 @@ services:
     depends_on:
       - postgres
       - redis
-      - mcp-signer
+      # mcp-signer temporalmente deshabilitado hasta implementar el Módulo 3
     networks:
       - incisive-nova-network
 
-  mcp-signer:
-    image: incisive-nova-mcp-signer:${IMAGE_TAG:-latest}
-    build:
-      context: ./backend
-      dockerfile: Dockerfile.mcp
-    environment:
-      KEY_STORAGE_TYPE: hsm
-      SIGNATURE_ALGO: ed25519
-      JWT_VALIDATION_ENABLED: "true"
-      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
-      # La semilla de firma se inyecta sólo aquí, en el proceso aislado.
-      STELLAR_SECRET_SEED: ${STELLAR_SECRET_SEED}
-    volumes:
-      - keys:/secure/keys
-    networks:
-      - incisive-nova-network
-    # Servicio aislado: no expone puertos al exterior.
-    expose:
-      - "9090"
+  # mcp-signer: deshabilitado hasta implementar src/mcp_server (Módulo 3).
+  # Descomentar cuando esté listo.
+  # mcp-signer:
+  #   image: incisive-nova-mcp-signer:${IMAGE_TAG:-latest}
+  #   build:
+  #     context: ./backend
+  #     dockerfile: Dockerfile.mcp
+  #   environment:
+  #     KEY_STORAGE_TYPE: hsm
+  #     SIGNATURE_ALGO: ed25519
+  #     JWT_VALIDATION_ENABLED: "true"
+  #     JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+  #     STELLAR_SECRET_SEED: ${STELLAR_SECRET_SEED}
+  #   volumes:
+  #     - keys:/secure/keys
+  #   networks:
+  #     - incisive-nova-network
+  #   expose:
+  #     - "9090"
 
   postgres:
     image: postgres:15-alpine
