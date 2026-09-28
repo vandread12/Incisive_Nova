@@ -361,24 +361,25 @@ Infraestructura como código (pipeline-as-code) para CI/CD con Harness, más el 
 - [ ] Implementar monitoreo de tiempos de liquidación
 
 ### Módulo 5: Sistema de Auditoría y Reporting
-**Estado**: 📋 Pendiente
+**Estado**: 🟡 Auditoría y reporting core completados — infra externa pendiente
 
 #### Backend Tasks
-- [ ] Crear sistema de logging estructurado
-- [ ] Implementar `src/core/audit_logger.py`
-- [ ] Crear endpoints para reporting
-- [ ] Implementar exportación de datos (CSV/PDF)
-- [ ] Crear sistema de alertas y notificaciones
+- [x] Crear sistema de logging estructurado (`src/core/audit_logger.py`)
+- [x] Implementar `src/core/audit_logger.py` (AuditLogger: record/query/metrics)
+- [x] Crear endpoints para reporting (`GET /api/v1/audit/logs`, `/audit/metrics`)
+- [x] Implementar exportación de datos (CSV vía `/audit/logs/export`)
+- [ ] Crear sistema de alertas y notificaciones (PagerDuty/Slack)
 
 #### Frontend Tasks
-- [ ] Crear página `/dashboard/audit`
-- [ ] Implementar `AuditLogTable` con filtros avanzados
-- [ ] Crear visualizaciones de métricas (charts)
-- [ ] Implementar exportación de reports
+- [x] Crear página `/dashboard/audit`
+- [x] Implementar `AuditLogTable` con filtros (tipo de evento, éxito/fallo) + export CSV
+- [x] Crear visualizaciones de métricas (`/dashboard/metrics`: tarjetas + barras por tipo)
+- [x] Implementar exportación de reports (CSV)
+- [x] Sidebar de navegación del dashboard (Órdenes/Auditoría/Métricas)
 - [ ] Crear sistema de dashboards personalizables
 
 #### Infrastructure Tasks
-- [ ] Configurar Elasticsearch para logs
+- [ ] Configurar Elasticsearch para logs (opcional; el logger ya emite log estructurado)
 - [ ] Implementar Kibana para visualización
 - [ ] Configurar alerting con PagerDuty/Slack
 - [ ] Implementar backup automático de logs

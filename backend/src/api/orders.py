@@ -9,6 +9,7 @@ from typing import Any, Dict, List
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
+from ..core.audit_logger import AuditEventType, get_audit_logger
 from ..orchestrator.order_repository import (
     OrderRepository,
     get_order_repository,
@@ -55,4 +56,12 @@ async def create_order(
     user: Dict[str, Any] = Depends(require_auth),
 ) -> OrdenB2B:
     """Crea una nueva orden B2B en estado PENDIENTE."""
-    return repo.create_order(payload)
+    order = repo.create_order(payload)
+    get_audit_logger().record(
+        AuditEventType.ORDER_CREATED,
+        actor=user.get("stellar_account"),
+        resource=order.id_orden,
+        message=f"Orden creada por {order.monto_facturado} {order.currency_destination}",
+        details={"buyer_id": order.buyer_id, "supplier_id": order.supplier_id},
+    )
+    return order

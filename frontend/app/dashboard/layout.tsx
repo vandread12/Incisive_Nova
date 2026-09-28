@@ -1,8 +1,10 @@
 import { appConfig } from "@/lib/config";
+import { DashboardNav } from "@/components/dashboard/DashboardNav";
 
 /**
- * Layout del dashboard (SPEC-08). Barra superior corporativa (teal) y contenedor
- * responsivo. Las rutas hijas están protegidas por el middleware.
+ * Layout del dashboard (SPEC-08). Barra superior corporativa (teal), sidebar de
+ * navegación (Órdenes / Auditoría / Métricas) y contenedor responsivo. Las
+ * rutas hijas están protegidas por el middleware.
  */
 export default function DashboardLayout({
   children,
@@ -22,7 +24,12 @@ export default function DashboardLayout({
           </nav>
         </div>
       </header>
-      <main className="mx-auto max-w-6xl px-4 py-8">{children}</main>
+      <div className="mx-auto flex max-w-6xl gap-6 px-4 py-8">
+        <aside className="w-48 shrink-0">
+          <DashboardNav />
+        </aside>
+        <main className="min-w-0 flex-1">{children}</main>
+      </div>
     </div>
   );
 }

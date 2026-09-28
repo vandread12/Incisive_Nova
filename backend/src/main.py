@@ -13,6 +13,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
+from .api.audit import router as audit_router
 from .api.auth import router as auth_router
 from .api.orders import router as orders_router
 from .api.settlement import router as settlement_router
@@ -53,6 +54,7 @@ def create_app() -> FastAPI:
     app.include_router(auth_router)
     app.include_router(orders_router)
     app.include_router(settlement_router)
+    app.include_router(audit_router)
 
     @app.exception_handler(AuthConfigurationError)
     async def _auth_config_error_handler(

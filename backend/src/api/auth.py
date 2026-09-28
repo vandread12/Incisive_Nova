@@ -13,6 +13,7 @@ from typing import Any, Dict, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
+from ..core.audit_logger import AuditEventType, get_audit_logger
 from ..core.exceptions import (
     AuthConfigurationError,
     ChallengeGenerationError,
@@ -59,6 +60,11 @@ async def get_challenge(
         ) from exc
 
     logger.info("Challenge generado para cuenta %s", account)
+    get_audit_logger().record(
+        AuditEventType.CHALLENGE_GENERATED,
+        actor=account,
+        message="Challenge SEP-10 generado",
+    )
     return ChallengeResponse(
         transaction=challenge_data["transaction"],
         network_passphrase=challenge_data["network_passphrase"],
@@ -80,12 +86,22 @@ async def verify_challenge_and_get_token(
         )
     except ChallengeVerificationError as exc:
         logger.warning("Error verificando challenge: %s", exc)
+        get_audit_logger().record(
+            AuditEventType.AUTH_FAILED,
+            success=False,
+            message="Verificación de challenge fallida",
+        )
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)
         ) from exc
 
     logger.info(
         "Token emitido para cuenta verificada %s", token_data["public_key"]
+    )
+    get_audit_logger().record(
+        AuditEventType.TOKEN_ISSUED,
+        actor=token_data["public_key"],
+        message="Token JWT emitido tras verificación SEP-10",
     )
     return TokenResponse(**token_data)
 
