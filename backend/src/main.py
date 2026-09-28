@@ -14,6 +14,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from .api.auth import router as auth_router
+from .api.orders import router as orders_router
 from .api.settlement import router as settlement_router
 from .core.exceptions import AuthConfigurationError
 
@@ -50,6 +51,7 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
     app.include_router(auth_router)
+    app.include_router(orders_router)
     app.include_router(settlement_router)
 
     @app.exception_handler(AuthConfigurationError)

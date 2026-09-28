@@ -1,70 +1,24 @@
 /**
  * Cliente de datos de órdenes B2B (SPEC-08).
  *
- * Consume el endpoint del backend que lista las órdenes de liquidación. El
- * endpoint real (`/api/v1/settlement/orders`) se implementará en el backend en
- * una tarea posterior; mientras tanto, si la petición falla, se degrada a un
- * conjunto de datos de ejemplo para permitir el desarrollo de la UI.
+ * Consume las órdenes de liquidación a través del Route Handler interno de
+ * Next (`/api/orders`), que corre en el servidor, lee la cookie de sesión
+ * HttpOnly y reenvía la petición al backend con el header Authorization.
  */
 
 import { appConfig } from "./config";
 import type { OrdenB2BUI, OrderLifecycle } from "@/types/settlement";
-import { EXAMPLE_ORDEN_B2B_UI } from "@/types/settlement";
 
-function apiBase(): string {
-  return `${appConfig.apiUrl}/api/${appConfig.apiVersion}`;
-}
-
-const SAMPLE_ORDERS: OrdenB2BUI[] = [
-  EXAMPLE_ORDEN_B2B_UI,
-  {
-    ...EXAMPLE_ORDEN_B2B_UI,
-    id_orden: "order_223344",
-    monto_facturado: "12500.00",
-    currency_destination: "BRL",
-    asset_destino_code: "BRL",
-    rail_type: "ABROAD_PIX",
-    status: "EVALUANDO",
-    tx_hash: undefined,
-    decision_jev: {
-      estado: "REQUIERE_AUDITORIA",
-      nivel_confianza: 0.88,
-      motivo_resolucion: "Volumen atípico; requiere revisión de cumplimiento",
-      banderas_cumplimiento: ["AML_CHECK_REQUIRED"],
-    },
-  },
-  {
-    ...EXAMPLE_ORDEN_B2B_UI,
-    id_orden: "order_998877",
-    monto_facturado: "3200.00",
-    rail_type: "STELLAR_NATIVE",
-    asset_destino_code: "USDC",
-    status: "FALLIDO",
-    tx_hash: undefined,
-    decision_jev: {
-      estado: "RECHAZADO_RIESGO",
-      nivel_confianza: 0.42,
-      motivo_resolucion: "Score de riesgo del comprador por debajo del umbral",
-    },
-    error_reason: "Jev rechazó la operación por riesgo",
-  },
-];
-
-/** Obtiene la lista de órdenes B2B. Degrada a datos de ejemplo si falla. */
+/** Obtiene la lista de órdenes B2B vía el proxy interno autenticado. */
 export async function fetchOrders(): Promise<OrdenB2BUI[]> {
-  try {
-    const response = await fetch(`${apiBase()}/settlement/orders`, {
-      method: "GET",
-      credentials: "include",
-    });
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
-    }
-    return (await response.json()) as OrdenB2BUI[];
-  } catch {
-    // Fallback de desarrollo mientras el endpoint no está disponible.
-    return SAMPLE_ORDERS;
+  const response = await fetch("/api/orders", {
+    method: "GET",
+    cache: "no-store",
+  });
+  if (!response.ok) {
+    throw new Error(`Error cargando órdenes (HTTP ${response.status})`);
   }
+  return (await response.json()) as OrdenB2BUI[];
 }
 
 /** Deriva el ciclo de vida de una orden a partir de su estado. */

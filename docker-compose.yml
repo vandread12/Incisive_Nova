@@ -85,6 +85,8 @@ services:
       # HTTP sin TLS: la cookie de sesión NO debe ser Secure o el navegador
       # no la reenvía y el login entra en bucle. Poner "true" al usar HTTPS.
       COOKIE_SECURE: "false"
+      # URL interna del backend para llamadas server-to-server (proxy /api/orders).
+      INTERNAL_API_URL: http://api-service:8000
       NEXT_PUBLIC_STELLAR_NETWORK: testnet
     depends_on:
       - api-service
