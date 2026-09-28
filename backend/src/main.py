@@ -8,6 +8,7 @@ MCP se añadirán en tareas posteriores.
 
 import logging
 import os
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -18,8 +19,25 @@ from .api.auth import router as auth_router
 from .api.orders import router as orders_router
 from .api.settlement import router as settlement_router
 from .core.exceptions import AuthConfigurationError
+from .db.database import init_db
 
 logger = logging.getLogger(__name__)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Inicializa la base de datos al arrancar (crea tablas si DATABASE_URL).
+
+    Si no hay BD configurada, los repositorios usan su fallback en memoria.
+    """
+    try:
+        if init_db():
+            logger.info("Base de datos inicializada (tablas creadas/verificadas)")
+        else:
+            logger.info("Sin DATABASE_URL: usando almacenamiento en memoria")
+    except Exception as exc:  # noqa: BLE001 - no bloquear el arranque
+        logger.error("No se pudo inicializar la base de datos: %s", exc)
+    yield
 
 
 def _cors_origins() -> list[str]:
@@ -43,6 +61,7 @@ def create_app() -> FastAPI:
         title="Incisive Nova API",
         description="Plataforma de liquidación B2B agéntica sobre Stellar",
         version="0.1.0",
+        lifespan=lifespan,
     )
     app.add_middleware(
         CORSMiddleware,

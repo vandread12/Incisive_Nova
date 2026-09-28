@@ -261,6 +261,21 @@ Infraestructura como código (pipeline-as-code) para CI/CD con Harness, más el 
 >  - Todos los pipelines/triggers/servicios/entornos referencian `connectorRef: incisive_nova`
 > Acciones pendientes en la cuenta de Harness: registrar los valores reales de los secretos (`stellar_secret_seed`, `jev_api_key`, `abroad_api_key`, `docker_agentic_token`, etc.) y crear los pipelines/triggers desde estos YAML.
 
+## Persistencia: Migración a PostgreSQL
+**Estado**: [x] ✅ Completada
+
+Órdenes y logs de auditoría persistidos en PostgreSQL vía SQLAlchemy (psycopg v3), con fallback en memoria para tests/desarrollo sin BD.
+
+- [x] `src/db/database.py` — engine/sesión SQLAlchemy, `DATABASE_URL` normalizado a `postgresql+psycopg`, `init_db()`, `is_db_enabled()`
+- [x] `src/db/models.py` — `OrderModel` y `AuditEventModel` (JSON para campos anidados)
+- [x] `OrderRepository` — fachada Postgres/memoria, interfaz síncrona intacta (endpoints sin cambios)
+- [x] `AuditLogger` — record/query/metrics sobre Postgres o memoria
+- [x] `lifespan` de FastAPI crea las tablas al arrancar (seed condicional de órdenes)
+- [x] Tests: fallback en memoria (131/131) + persistencia real con SQLite (`tests/db/test_persistence.py`)
+- [x] `DATABASE_URL` ya configurado en `docker-compose.yml` (api-service → postgres)
+
+> Nota: se usó SQLAlchemy síncrono con psycopg v3 (FastAPI ejecuta los handlers sync en threadpool), evitando reescribir endpoints y tests a async.
+
 ## Tareas de Implementación por Módulo
 
 ### Módulo 1: Autenticación SEP-10 y JWT (SPEC-07)
